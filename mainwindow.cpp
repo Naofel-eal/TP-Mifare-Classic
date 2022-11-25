@@ -88,8 +88,6 @@ void MainWindow::on_btn_ledONred_clicked()
 
 void MainWindow::on_btn_lire_clicked() {
     uint8_t data[240] = {0};
-    int sect = 2;
-    int bloc = 1; //BLOC DU PRENOM
     uint8_t offset;
     int16_t status = 0;
     uint8_t atq[2];
@@ -97,21 +95,37 @@ void MainWindow::on_btn_lire_clicked() {
     uint8_t uid[12];
     uint16_t uid_len = 12;
 
-    ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len);
-    status = Mf_Classic_Read_Sector(&MonLecteur, TRUE, sect, data, AuthKeyA, 2);
+    int sectIdentity = 2;
+    int sectCounter = 3;
+    int blocPrenom = 1; //BLOC DU PRENOM
+    int blocNom = 2; //BLOC DU NOM
 
+    ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len);
+    status = Mf_Classic_Read_Sector(&MonLecteur, TRUE, sectIdentity, data, AuthKeyA, 2);
     if (status == MI_OK){
         QString prenom = "";
+        QString nom = "";
 
         for (offset = 0; offset < 16; offset++){
-            if(data[16 * bloc + offset] != 0)
-                prenom += (char)data[16 * bloc + offset];
+            if(data[16 * blocPrenom + offset] != 0)
+                prenom += (char)data[16 * blocPrenom + offset];
+            if(data[16 * blocNom + offset] != 0)
+                nom += (char)data[16 * blocNom + offset];
         }
-        qDebug() << "prenom: " << prenom;
+        ui->nameLabel->setText("Nom: " + nom);
+        ui->firstnameLabel->setText("Prénom: " + prenom);
     }
-    else {
-        qDebug() << "STATUS != MI_OK " << status;
+
+    int sectorCounter = 3;
+    int blocCounter = 14;
+    uint32_t value;
+
+    status = Mf_Classic_Read_Value(&MonLecteur, TRUE, blocCounter, &value, AuthKeyA, 3);
+    if(status == MI_OK) {
+        ui->lcdCounter->display((int)value);
     }
+    else
+        qDebug() << "Erreur COMPTEUR status: " << status;
 }
 
 
