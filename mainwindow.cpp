@@ -1,7 +1,7 @@
 #include "mainwindow.h"
+#include <QMainWindow>
 #include "ui_mainwindow.h"
 #include <QtGui>
-
 #include "MfErrNo.h"
 #include "Core.h"
 #include "Sw_Device.h"
@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
 }
 
 MainWindow::~MainWindow()
