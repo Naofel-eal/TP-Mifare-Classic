@@ -37,16 +37,24 @@ void MainWindow::on_btn_connect_clicked()
     MonLecteur.device = 0;
 
     status = OpenCOM(&MonLecteur);
-    qDebug() << "OpenCOM" << status;
-
-    status = Version(&MonLecteur);
-    ui->Affichage->setText(MonLecteur.version);
-    ui->Affichage->update();
-    RF_Power_Control(&MonLecteur, TRUE, 0);
+    if(status == MI_OK) {
+         ui->error->setText("");
+        this->notifUser();
+        qDebug() << "OpenCOM" << status;
+        status = Version(&MonLecteur);
+        ui->Affichage->setText(MonLecteur.version);
+        ui->Affichage->update();
+        RF_Power_Control(&MonLecteur, TRUE, 0);
+    }
+    else {
+        ui->error->setText("Erreur connexion lecteur.");
+    }
 }
 
 void MainWindow::on_btn_disconnect_clicked()
 {
+    ui->error->setText("");
+    this->notifUser();
     RF_Power_Control(&MonLecteur, FALSE, 0);
     LEDBuzzer(&MonLecteur, LED_OFF);
     CloseCOM(&MonLecteur);
@@ -55,35 +63,35 @@ void MainWindow::on_btn_disconnect_clicked()
 
 void MainWindow::on_btn_quitter_clicked()
 {
-    int16_t status = MI_OK;
+    ui->error->setText("");
     RF_Power_Control(&MonLecteur, FALSE, 0);
-    status = LEDBuzzer(&MonLecteur, LED_OFF);
-    status = CloseCOM(&MonLecteur);
+    LEDBuzzer(&MonLecteur, LED_OFF);
+    CloseCOM(&MonLecteur);
     qApp->quit();
 }
 
 void MainWindow::on_btn_ledON_clicked()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_RED_ON);
+    ui->error->setText("");
+    LEDBuzzer(&MonLecteur, LED_RED_ON);
 }
 
 void MainWindow::on_btn_ledOFF_clicked()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_GREEN_OFF);
+    ui->error->setText("");
+    LEDBuzzer(&MonLecteur, LED_GREEN_OFF);
 }
 
 void MainWindow::on_btn_ledONyellow_clicked()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_YELLOW_ON);
+    ui->error->setText("");
+    LEDBuzzer(&MonLecteur, LED_YELLOW_ON);
 }
 
 void MainWindow::on_btn_ledONred_clicked()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_GREEN_ON);
+    ui->error->setText("");
+    LEDBuzzer(&MonLecteur, LED_GREEN_ON);
 }
 
 
@@ -104,6 +112,8 @@ void MainWindow::on_btn_lire_clicked() {
     ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len);
     status = Mf_Classic_Read_Sector(&MonLecteur, TRUE, sectIdentity, data, AuthKeyA, 2);
     if (status == MI_OK){
+        ui->error->setText("");
+        this->notifUser();
         QString prenom = "";
         QString nom = "";
 
@@ -123,24 +133,23 @@ void MainWindow::on_btn_lire_clicked() {
 
     status = Mf_Classic_Read_Value(&MonLecteur, TRUE, blocCounter, &value, AuthKeyA, 3);
     if(status == MI_OK) {
+        ui->error->setText("");
         ui->counterSpinBox->setValue((int)value);
     }
     else
-        qDebug() << "Erreur COMPTEUR status: " << status;
+        ui->error->setText("Erreur lecture : " + QString::number(status));
 }
 
 
 
 void MainWindow::on_btn_buzzer_released()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_GREEN_ON);
+    LEDBuzzer(&MonLecteur, LED_GREEN_ON);
 }
 
 void MainWindow::on_btn_buzzer_pressed()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_GREEN_ON+LED_GREEN_ON);
+    LEDBuzzer(&MonLecteur, LED_GREEN_ON+LED_GREEN_ON);
 }
 
 void MainWindow::on_btn_ledON1_clicked()
@@ -151,8 +160,8 @@ void MainWindow::on_btn_ledON1_clicked()
 
 void MainWindow::on_writeBtn_clicked()
 {
-    uint8_t data[240] = {0};
-    uint8_t data2[240] = {0};
+    uint8_t nameArray[240] = {0};
+    uint8_t firstnameArray[240] = {0};
     int16_t status = 0;
     uint8_t offset;
     uint8_t atq[2];
@@ -168,39 +177,43 @@ void MainWindow::on_writeBtn_clicked()
     if(nom !="" && prenom != "") {
         status = ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len);
         if(status == MI_OK){
-            qDebug() << "UID: " << status;
-
-           QByteArray a = nom.toUtf8() ;
-           QByteArray b = prenom.toUtf8() ;
-
+            ui->error->setText("");
+            this->notifUser();
+           QByteArray nameByte = nom.toUtf8() ;
+           QByteArray firstnameByte = prenom.toUtf8() ;
 
            for(int i=0; i < 16; i++){
-               data[i] = a[i];
-               data2[i] = b[i];
+               nameArray[i] = nameByte[i];
+               firstnameArray[i] = firstnameByte[i];
            }
 
-            status = Mf_Classic_Write_Block(&MonLecteur, TRUE, 10, data, AuthKeyB, 2);
+            status = Mf_Classic_Write_Block(&MonLecteur, TRUE, 10, nameArray, AuthKeyB, 2);
 
             if(status != MI_OK){
-                qDebug()<< "Erreur ecriture";
-                qDebug() << status ;
+                ui->error->setText("Erreur ecriture nom: " + QString::number(status));
+            }
+            else {
+                ui->error->setText("");
             }
 
-            status = Mf_Classic_Write_Block(&MonLecteur, TRUE, 9, data2, AuthKeyB, 2);
+            status = Mf_Classic_Write_Block(&MonLecteur, TRUE, 9, firstnameArray, AuthKeyB, 2);
 
             if (status != MI_OK){
-                qDebug()<< "Erreur ecriture";
-                qDebug() << status ;
+                ui->error->setText("Erreur ecriture prenom: " + QString::number(status));
+            }
+            else {
+                ui->error->setText("");
             }
         }
         else{
-            qDebug()<< "Erreur lecteur";
+            ui->error->setText("Erreur lecteur");
         }
+        ui->error->setText("");
         ui->firstnameText->setText("");
         ui->nameText->setText("");
     }
     else {
-        qDebug() << "Le prenom ET le nom ne doivent pas être vides.";
+        ui->error->setText("Le nom et le prénom ne doivent pas être vide !");
     }
 }
 
@@ -211,7 +224,10 @@ void MainWindow::on_counterSpinBox_valueChanged(int arg1)
 
     int status = Mf_Classic_Write_Value(&MonLecteur, TRUE, 14, value, AuthKeyB,3);
     if(status != MI_OK)
-        qDebug() << "ERREUR ECRITURE COMPTEUR;";
+        ui->error->setText("Erreur ecriture compteur: " + QString::number(status));
+    else {
+        ui->error->setText("");
+    }
 }
 
 
@@ -220,3 +236,9 @@ void MainWindow::on_stepSpinBox_valueChanged(int arg1)
     ui->counterSpinBox->setSingleStep(arg1);
 }
 
+void MainWindow::notifUser() {
+    LEDBuzzer(&MonLecteur, LED_RED_ON);
+    LEDBuzzer(&MonLecteur, LED_GREEN_ON+LED_GREEN_ON);
+    QThread::msleep(100);
+    LEDBuzzer(&MonLecteur, LED_GREEN_OFF);
+}

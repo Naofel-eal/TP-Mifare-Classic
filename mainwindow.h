@@ -46,6 +46,7 @@ private slots:
     void on_stepSpinBox_valueChanged(int arg1);
 
 private:
+    void notifUser();
     Ui::MainWindow *ui;
 };
 #endif // MAINWINDOW_H
