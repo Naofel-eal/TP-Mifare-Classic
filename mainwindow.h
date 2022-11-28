@@ -39,6 +39,12 @@ private slots:
 
     void on_btn_ledON1_clicked();
 
+    void on_writeBtn_clicked();
+
+    void on_counterSpinBox_valueChanged(int arg1);
+
+    void on_stepSpinBox_valueChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
 };

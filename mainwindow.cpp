@@ -123,7 +123,7 @@ void MainWindow::on_btn_lire_clicked() {
 
     status = Mf_Classic_Read_Value(&MonLecteur, TRUE, blocCounter, &value, AuthKeyA, 3);
     if(status == MI_OK) {
-        ui->lcdCounter->display((int)value);
+        ui->counterSpinBox->setValue((int)value);
     }
     else
         qDebug() << "Erreur COMPTEUR status: " << status;
@@ -148,3 +148,75 @@ void MainWindow::on_btn_ledON1_clicked()
     int16_t status = MI_OK;
     status = LEDBuzzer(&MonLecteur, LED_ON);
 }
+
+void MainWindow::on_writeBtn_clicked()
+{
+    uint8_t data[240] = {0};
+    uint8_t data2[240] = {0};
+    int16_t status = 0;
+    uint8_t offset;
+    uint8_t atq[2];
+    uint8_t sak[1];
+    uint8_t uid[12];
+    uint16_t uid_len = 12;
+    int blockNom = 2;
+    int blockPrenom = 1;
+
+    QString nom = ui->nameText->toPlainText();
+    QString prenom = ui->firstnameText->toPlainText();
+
+    if(nom !="" && prenom != "") {
+        status = ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len);
+        if(status == MI_OK){
+            qDebug() << "UID: " << status;
+
+           QByteArray a = nom.toUtf8() ;
+           QByteArray b = prenom.toUtf8() ;
+
+
+           for(int i=0; i < 16; i++){
+               data[i] = a[i];
+               data2[i] = b[i];
+           }
+
+            status = Mf_Classic_Write_Block(&MonLecteur, TRUE, 10, data, AuthKeyB, 2);
+
+            if(status != MI_OK){
+                qDebug()<< "Erreur ecriture";
+                qDebug() << status ;
+            }
+
+            status = Mf_Classic_Write_Block(&MonLecteur, TRUE, 9, data2, AuthKeyB, 2);
+
+            if (status != MI_OK){
+                qDebug()<< "Erreur ecriture";
+                qDebug() << status ;
+            }
+        }
+        else{
+            qDebug()<< "Erreur lecteur";
+        }
+        ui->firstnameText->setText("");
+        ui->nameText->setText("");
+    }
+    else {
+        qDebug() << "Le prenom ET le nom ne doivent pas être vides.";
+    }
+}
+
+
+void MainWindow::on_counterSpinBox_valueChanged(int arg1)
+{
+    uint32_t value = arg1;
+
+    int status = Mf_Classic_Write_Value(&MonLecteur, TRUE, 14, value, AuthKeyB,3);
+    if(status != MI_OK)
+        qDebug() << "ERREUR ECRITURE COMPTEUR;";
+}
+
+
+void MainWindow::on_stepSpinBox_valueChanged(int arg1)
+{
+    ui->counterSpinBox->setSingleStep(arg1);
+}
+
