@@ -1155,17 +1155,17 @@ border-radius: 25px;</string>
    <widget class="QPushButton" name="increment">
     <property name="geometry">
      <rect>
-      <x>780</x>
-      <y>400</y>
-      <width>83</width>
-      <height>29</height>
+      <x>730</x>
+      <y>350</y>
+      <width>51</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="styleSheet">
      <string notr="true">color: rgb(0,0,0);</string>
     </property>
     <property name="text">
-     <string>Increment</string>
+     <string>+</string>
     </property>
    </widget>
    <widget class="QPushButton" name="decrement">
@@ -1173,15 +1173,15 @@ border-radius: 25px;</string>
      <rect>
       <x>870</x>
       <y>400</y>
-      <width>83</width>
-      <height>29</height>
+      <width>41</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="styleSheet">
      <string notr="true">color: rgb(0,0,0);</string>
     </property>
     <property name="text">
-     <string>decrement</string>
+     <string>-</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="counterLineEdit">

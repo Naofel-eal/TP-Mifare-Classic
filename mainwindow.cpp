@@ -18,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
+    ui->counterLineEdit->setValidator( new QIntValidator(0, 100, this) );
+    setWindowTitle("HACK MIFARE");
 }
 
 MainWindow::~MainWindow()
@@ -134,13 +136,11 @@ void MainWindow::on_btn_lire_clicked() {
     status = Mf_Classic_Read_Value(&MonLecteur, TRUE, blocCounter, &value, AuthKeyA, 3);
     if(status == MI_OK) {
         ui->error->setText("");
-        ui->counterSpinBox->setValue((int)value);
+        ui->counterLineEdit->setText(QString::number(value));
     }
     else
         ui->error->setText("Erreur lecture : " + QString::number(status));
 }
-
-
 
 void MainWindow::on_btn_buzzer_released()
 {
@@ -154,8 +154,7 @@ void MainWindow::on_btn_buzzer_pressed()
 
 void MainWindow::on_btn_ledON1_clicked()
 {
-    int16_t status = MI_OK;
-    status = LEDBuzzer(&MonLecteur, LED_ON);
+    LEDBuzzer(&MonLecteur, LED_ON);
 }
 
 void MainWindow::on_writeBtn_clicked()
@@ -230,15 +229,63 @@ void MainWindow::on_counterSpinBox_valueChanged(int arg1)
     }
 }
 
-
-void MainWindow::on_stepSpinBox_valueChanged(int arg1)
-{
-    ui->counterSpinBox->setSingleStep(arg1);
-}
-
 void MainWindow::notifUser() {
     LEDBuzzer(&MonLecteur, LED_RED_ON);
     LEDBuzzer(&MonLecteur, LED_GREEN_ON+LED_GREEN_ON);
     QThread::msleep(100);
     LEDBuzzer(&MonLecteur, LED_GREEN_OFF);
 }
+
+void MainWindow::on_increment_clicked()
+{
+    int step = ui->stepSpinBox->value();
+
+    int status = Mf_Classic_Increment_Value(&MonLecteur, true, 14, step, 13, AuthKeyB, 3);
+    if(status != MI_OK)
+        ui->error->setText("Erreur incrémentation compteur: " + QString::number(status));
+    else
+        ui->error->setText("");
+
+    status = Mf_Classic_Restore_Value(&MonLecteur, true, 13, 14, AuthKeyB, 3);
+    if(status != MI_OK)
+        ui->error->setText("Erreur restore lors de l'incrémentation du compteur: " + QString::number(status));
+    else {
+        this->on_btn_lire_clicked();
+        ui->error->setText("");
+    }
+}
+
+
+void MainWindow::on_decrement_clicked()
+{
+    int step = ui->stepSpinBox->value();
+
+    int status = Mf_Classic_Decrement_Value(&MonLecteur, true, 14, step, 13, AuthKeyA, 3);
+    if(status != MI_OK)
+        ui->error->setText("Erreur décrémentation compteur: " + QString::number(status));
+    else
+        ui->error->setText("");
+
+    status = Mf_Classic_Restore_Value(&MonLecteur, true, 13, 14, AuthKeyA, 3);
+    if(status != MI_OK)
+        ui->error->setText("Erreur restore lors de la décrémentation du compteur: " + QString::number(status));
+    else {
+        this->on_btn_lire_clicked();
+        ui->error->setText("");
+    }
+}
+
+
+void MainWindow::on_counterLineEdit_editingFinished()
+{
+    uint32_t value = ui->counterLineEdit->text().toInt();
+
+    int status = Mf_Classic_Write_Value(&MonLecteur, TRUE, 14, value, AuthKeyB,3);
+    if(status != MI_OK)
+        ui->error->setText("Erreur ecriture compteur: " + QString::number(status));
+    else {
+        this->on_btn_lire_clicked();
+        ui->error->setText("");
+    }
+}
+

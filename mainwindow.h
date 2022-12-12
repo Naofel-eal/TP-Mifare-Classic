@@ -45,6 +45,14 @@ private slots:
 
     void on_stepSpinBox_valueChanged(int arg1);
 
+    void on_increment_clicked();
+
+    void on_decrement_clicked();
+
+    void on_counterLineEdit_textChanged(const QString &arg1);
+
+    void on_counterLineEdit_editingFinished();
+
 private:
     void notifUser();
     Ui::MainWindow *ui;
